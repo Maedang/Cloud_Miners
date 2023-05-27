@@ -1,0 +1,86 @@
+---
+title: "Spotify EDA"
+author: "Lani Lewis"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# PACKAGE ####
+#install.packages('spotifyr')
+#install.packages('ggridges')
+```
+
+```{r}
+# SPOTIFY AUTHENTICATION ####
+Sys.setenv(SPOTIFY_CLIENT_ID = '12e0ce18156d4db8a61a93e1d90fdf3e')
+Sys.setenv(SPOTIFY_CLIENT_SECRET = 'b39077a30ea54a37b05a905022af2aa0')
+
+access_token <- get_spotify_access_token()
+```
+
+```{r}
+# SPOTIFY LIBRARY ####
+library(spotifyr)
+library(dplyr)
+library(purrr)
+library(knitr)
+library(lubridate) # recently played tracks
+library(ggplot2)
+library(ggridges)
+library(plotly)
+library(GGally)
+```
+
+```{r}
+get_artist_audio_features('the beatles')
+```
+
+
+
+```{r}
+## LARGER DATASET | get_my_recently_played ####
+spotifList <- get_my_recently_played(limit = 25) %>% 
+  mutate(
+    artist.name = map_chr(track.artists, function(x) x$name[1]),
+    played_at = as_datetime(played_at)
+  ) %>% 
+  select(
+    all_of(c("track.name", "artist.name", "track.album.name", "played_at"))
+  )
+
+
+spotifList %>% ggplot() +
+  geom_point(aes( x = as.Date.POSIXct(played_at, tz = "EST"), y = artist.name, fill = played_at), position = "jitter") +
+  xlab("Date") +
+  ggtitle("Top 25 Songs played by Artist")
+```  
+
+```{r}
+# get_my_devices ####
+device <- get_my_devices()
+
+str(device)
+```
+
+```{r}
+# get_my_playlists ####
+playList <- get_my_playlists(limit = 25)
+
+class(playList)
+summary(playList)
+```
+
+```{r}
+# get_playlist_tracks ####
+## https://open.spotify.com/playlist/60KraCNzm7P8khpej2AEJP?si=611a658c2e504fa3
+tracks <- get_playlist_tracks("60KraCNzm7P8khpej2AEJP", limit = 25)
+
+class(tracks)
+summary(tracks)
+str(tracks)
+```
